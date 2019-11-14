@@ -47,8 +47,6 @@ function ex_1d()
     abstol = 1e-4
     reltol = 1e-4
 
-    @infiltrate
-    
     # Initial conditions
     ics = [1e8; Vp / 1000]
     

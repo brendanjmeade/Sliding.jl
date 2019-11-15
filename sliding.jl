@@ -16,30 +16,29 @@ function calcdadv()
     return dadv
 end
 
-function calcdvθclassic!(dvθ, vθ, p, t)
+function calcdvθclassic!(du, u, p, t)
     dc, η, σn, a, b, μ, Vp, L, ρ, statelaw = p
-    θ = vθ[1]
-    v = vθ[2]
-    dvθ[1] = statelaw(v, θ, dc)
-    dvθ[2] = 1 / (η / σn + a / v) * (μ * (Vp - v) / (L * σn) - b * dvθ[1] / θ)
+    θ = u[1]
+    v = u[2]
+    du[1] = statelaw(v, θ, dc)
+    du[2] = 1 / (η / σn + a / v) * (μ * (Vp - v) / (L * σn) - b * du[1] / θ)
     return nothing
 end
 
-
-function calcdvθ!(dvθ, vθ, p, t)
+function calcdvθab!(du, u, p, t)
     dc, η, σn, a, b, μ, vp, L, ρ, statelaw, fstar, vstar, θstar = p
-    θ = vθ[1]
-    v = vθ[2]
-    dθprev = dvθ[1]
-    dvprev = dvθ[2]
-    dvθ[1] = statelaw(v, θ, dc)
+    θ = u[1]
+    v = u[2]
+    dθprev = du[1]
+    dvprev = du[2]
+    du[1] = statelaw(v, θ, dc)
     dadt = 0 # calcdadv(a, v) * dvprev
     dbdt = 0
     numclassic = (μ * (vp - v) / (L * σn) - b * dvθ[1] / θ)
     numab = -dadt * log(v / vstar) - dbdt * log(θ / θstar)
     numσn = 0
     denom = (η / σn + a / v)
-    dvθ[2] = (numclassic + numab + numσn) / denom
+    du[2] = (numclassic + numab + numσn) / denom
     return nothing
 end
 
@@ -100,18 +99,17 @@ function sliding()
     
     # Time integrate - classic
     icsclassic = [1e8; vp / 1000]
-    pclassic = (dc, η, σn, a, b, μ, vp, L, ρ, aginglaw, fstar, vstar, θstar)
+    pclassic = (dc, η, σn, a, b, μ, vp, L, ρ, aginglaw)
     probclassic = ODEProblem(calcdvθclassic!, icsclassic, tspan, pclassic)
     solclassic = solve(probclassic, RK4(), abstol = abstol, reltol = reltol)
     plottimeseries(solclassic, siay, "RSF classic")
 
     # Time integrate - a, b can evolve
     icsab = [1e8 ; vp / 1000; a ; b]
-    # p = (dc, η, σn, a, b, μ, vp, L, ρ, aginglaw, fstar, vstar, θstar)
-    # prob = ODEProblem(calcdvθclassic!, ics, tspan, p)
+    pab = (dc, η, σn, a, b, μ, vp, L, ρ, aginglaw, fstar, vstar, θstar)
+    probab = ODEProblem(calcdvθab!, icsab, tspan, pab)
     # sol = solve(prob, RK4(), abstol = abstol, reltol = reltol)
     # plottimeseries(sol, siay, "RSF classic")
-
     
     return nothing
 end

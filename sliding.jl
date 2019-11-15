@@ -16,7 +16,12 @@ function calcdvθ!(dvθ, vθ, p, t)
     θ = vθ[1]
     v = vθ[2]
     dvθ[1] = statelaw(v, θ, dc)
-    dvθ[2] = 1 / (η / σn + a / v) * (μ * (vp - v) / (L * σn) - b * dvθ[1] / θ)
+    dadt = 0
+    dbdt = 0
+    numerator1 = (μ * (vp - v) / (L * σn) - b * dvθ[1] / θ)
+    numerator2 = 0
+    denominator = (η / σn + a / v)
+    dvθ[2] = (numerator1 + numerator2) / denominator
     return nothing
 end
 

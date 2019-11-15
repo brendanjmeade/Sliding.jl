@@ -4,7 +4,7 @@ using PyPlot
 using Infiltrator
 
 function aginglaw(v, θ, dc)
-    return 1 -  θ * v / dc
+    return 1 - θ * v / dc
 end
 
 function sliplaw(v, θ, dc)

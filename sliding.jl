@@ -12,11 +12,11 @@ function sliplaw(v, θ, dc)
 end
 
 function calcdvθ!(dvθ, vθ, p, t)
-    dc, η, σn, a, b, μ, Vp, L, ρ, statelaw = p
+    dc, η, σn, a, b, μ, vp, L, ρ, statelaw, fstar, vstar, θstar = p
     θ = vθ[1]
     v = vθ[2]
     dvθ[1] = statelaw(v, θ, dc)
-    dvθ[2] = 1 / (η / σn + a / v) * (μ * (Vp - v) / (L * σn) - b * dvθ[1] / θ)
+    dvθ[2] = 1 / (η / σn + a / v) * (μ * (vp - v) / (L * σn) - b * dvθ[1] / θ)
     return nothing
 end
 
@@ -64,17 +64,22 @@ function sliding()
     L = 60 * 1e3
     a = 0.015
     b = 0.02
-    Vp = 1e-9
+    vp = 1e-9
     σn = 30e6
     dc = 0.2
     abstol = 1e-4
     reltol = 1e-4
 
+    # Parameters need for d(a, b σn)/dt
+    fstar = 0.6 # ???
+    vstar = vp # ???
+    θstar = 1e9 # ???
+    
     # Initial conditions
-    ics = [1e8; Vp / 1000]
+    ics = [1e8; vp / 1000]
     
     # Time integrate
-    p = (dc, η, σn, a, b, μ, Vp, L, ρ, aginglaw)
+    p = (dc, η, σn, a, b, μ, vp, L, ρ, aginglaw, fstar, vstar, θstar)
     prob = ODEProblem(calcdvθ!, ics, tspan, p)
     sol = solve(prob, RK4(), abstol = abstol, reltol = reltol)
     plottimeseries(sol, siay, "RSF classic")

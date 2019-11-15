@@ -3,11 +3,19 @@ using PyCall
 using PyPlot
 using Infiltrator
 
+function aginglaw(v, θ, dc)
+    return 1 -  θ * v / dc
+end
+
+function sliplaw(v, θ, dc)
+    return -v * θ / dc * log(v * θ / dc)
+end
+
 function calcdvθ!(dvθ, vθ, p, t)
-    dc, η, σn, a, b, μ, Vp, L, ρ = p
+    dc, η, σn, a, b, μ, Vp, L, ρ, statelaw = p
     θ = vθ[1]
     v = vθ[2]
-    dvθ[1] = -v * θ / dc * log(v * θ / dc)
+    dvθ[1] = statelaw(v, θ, dc)
     dvθ[2] = 1 / (η / σn + a / v) * (μ * (Vp - v) / (L * σn) - b * dvθ[1] / θ)
     return nothing
 end
@@ -66,7 +74,7 @@ function sliding()
     ics = [1e8; Vp / 1000]
     
     # Time integrate
-    p = (dc, η, σn, a, b, μ, Vp, L, ρ)
+    p = (dc, η, σn, a, b, μ, Vp, L, ρ, aginglaw)
     prob = ODEProblem(calcdvθ!, ics, tspan, p)
     sol = solve(prob, RK4(), abstol = abstol, reltol = reltol)
     plottimeseries(sol, siay, "RSF classic")

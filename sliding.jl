@@ -11,9 +11,14 @@ function sliplaw(v, θ, dc)
     return -v * θ / dc * log(v * θ / dc)
 end
 
-function calcdadv()
+function calcdadv(a, v)
     dadv = 0
     return dadv
+end
+
+function calcdbdv(b, v)
+    dbdv = 0
+    return dbdv
 end
 
 function calcdvθclassic!(du, u, p, t)
@@ -26,16 +31,18 @@ function calcdvθclassic!(du, u, p, t)
 end
 
 function calcdvθab!(du, u, p, t)
-    dc, η, σn, a, b, μ, vp, L, ρ, statelaw, fstar, vstar, θstar = p
+    dc, η, σn, μ, vp, L, ρ, statelaw, fstar, vstar, θstar = p
     θ = u[1]
     v = u[2]
-    dθprev = du[1]
-    dvprev = du[2]
+    a = u[3]
+    b = u[4]
+    dθ = du[1]
+    dv = du[2]
     du[1] = statelaw(v, θ, dc)
-    dadt = 0 # calcdadv(a, v) * dvprev
-    dbdt = 0
-    numclassic = (μ * (vp - v) / (L * σn) - b * dvθ[1] / θ)
-    numab = -dadt * log(v / vstar) - dbdt * log(θ / θstar)
+    da = calcdadv(a, v) * dv
+    db = calcdbdv(b, v) * dv
+    numclassic = (μ * (vp - v) / (L * σn) - b * du[1] / θ)
+    numab = -da * log(v / vstar) - db * log(θ / θstar)
     numσn = 0
     denom = (η / σn + a / v)
     du[2] = (numclassic + numab + numσn) / denom
@@ -102,14 +109,14 @@ function sliding()
     pclassic = (dc, η, σn, a, b, μ, vp, L, ρ, aginglaw)
     probclassic = ODEProblem(calcdvθclassic!, icsclassic, tspan, pclassic)
     solclassic = solve(probclassic, RK4(), abstol = abstol, reltol = reltol)
-    plottimeseries(solclassic, siay, "RSF classic")
+    plottimeseries(solclassic, siay, "RSF (classic)")
 
     # Time integrate - a, b can evolve
-    icsab = [1e8 ; vp / 1000; a ; b]
-    pab = (dc, η, σn, a, b, μ, vp, L, ρ, aginglaw, fstar, vstar, θstar)
+    icsab = [1e8 ; vp / 1000 ; a ; b]
+    pab = (dc, η, σn, μ, vp, L, ρ, aginglaw, fstar, vstar, θstar)
     probab = ODEProblem(calcdvθab!, icsab, tspan, pab)
-    # sol = solve(prob, RK4(), abstol = abstol, reltol = reltol)
-    # plottimeseries(sol, siay, "RSF classic")
+    solab = solve(probab, RK4(), abstol = abstol, reltol = reltol)
+    plottimeseries(solab, siay, "RSF (ab)")
     
     return nothing
 end

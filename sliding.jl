@@ -11,13 +11,21 @@ function sliplaw(v, θ, dc)
     return -v * θ / dc * log(v * θ / dc)
 end
 
-function calcdadv(a, v)
-    dadv = 0
+function calcdadv(v)
+    amin = 0.045
+    ahighdiff =  0.0319 - amin
+    δ = 1e-2 # m/s
+    # a = amin + ahighdiff * 0.5 * (1 + tanh((v - 5e-3) / δ))
+    dadv = ahighdiff * 0.5 * (sech((v - 5e-3) / δ))^2 / δ
     return dadv
 end
 
-function calcdbdv(b, v)
-    dbdv = 0
+function calcdbdv(v)
+    bmin = 0.085
+    bhighdiff =  0.2811 - bmin
+    δ = 1e-2 # m/s
+    # b = bmin + bhighdiff * 0.5 * (1 + tanh((v - 5e-3) / δ))
+    dbdv = bhighdiff * 0.5 * (sech((v - 5e-3) / δ))^2 / δ
     return dbdv
 end
 
@@ -39,13 +47,15 @@ function calcdvθab!(du, u, p, t)
     dθ = du[1]
     dv = du[2]
     du[1] = statelaw(v, θ, dc)
-    da = calcdadv(a, v) * dv
-    db = calcdbdv(b, v) * dv
+    da = calcdadv(v) * dv^2 # Pretty sure this square is wrong
+    db = calcdbdv(v) * dv^2 # Pretty sure this square is wrong
     numclassic = (μ * (vp - v) / (L * σn) - b * du[1] / θ)
-    numab = -da * log(v / vstar) - db * log(θ / θstar)
+    numab = -da * log(abs(v) / vstar) - db * log(abs(θ) / θstar)
     numσn = 0
     denom = (η / σn + a / v)
     du[2] = (numclassic + numab + numσn) / denom
+    du[3] = da
+    du[4] = db
     return nothing
 end
 
@@ -76,7 +86,6 @@ function plottimeseries(sol, siay, titlelabel)
     yscale("log")
     xlabel("time (step)")
     ylabel("v (m/s)")
-
     suptitle(titlelabel)
 
     return nothing
@@ -85,7 +94,7 @@ end
 function sliding()
     # Model parameters
     siay = 365.25 * 24 * 60 * 60
-    tspan = (0.0, siay * 2000.0)
+    tspan = (0.0, siay * 10000.0)
     μ = 3e10
     ν = 0.25
     ρ = 2700.0
@@ -95,7 +104,7 @@ function sliding()
     b = 0.02
     vp = 1e-9
     σn = 30e6
-    dc = 0.2
+    dc = 0.1
     abstol = 1e-4
     reltol = 1e-4
 

@@ -1,7 +1,24 @@
 using DifferentialEquations
 using PyCall
 using PyPlot
-using Infiltrator
+
+function tusharabmodels()
+    # Quick plots of Tushar's a and b
+    v = collect(LinRange(1e-15, 1e1, 100000))
+    amin = 0.045
+    ahighdiff =  0.0319 - amin
+    δ = 1e-2 # m/s
+    aplot = @. amin + ahighdiff * 0.5 * (1 + tanh((v - 5e-3) / δ))
+    bmin = 0.085
+    bhighdiff =  0.2811 - bmin
+    bplot = @. bmin + bhighdiff * 0.5 * (1 + tanh((v - 5e-3) / δ))
+    plot(v, aplot, "-r", label="a")
+    plot(v, bplot, "-b", label="b")
+    xscale("log")
+    xlabel(L"\log_{10} v")
+    ylabel(L"a, b")
+    legend()
+end
 
 function aginglaw(v, θ, dc)
     return 1 - θ * v / dc
@@ -47,8 +64,8 @@ function calcdvθab!(du, u, p, t)
     dθ = du[1]
     dv = du[2]
     du[1] = statelaw(v, θ, dc)
-    da = calcdadv(v) * dv^2 # Pretty sure this square is wrong
-    db = calcdbdv(v) * dv^2 # Pretty sure this square is wrong
+    da = calcdadv(v) * dv
+    db = calcdbdv(v) * dv
     numclassic = (μ * (vp - v) / (L * σn) - b * du[1] / θ)
     numab = -da * log(abs(v) / vstar) - db * log(abs(θ) / θstar)
     numσn = 0
@@ -94,7 +111,8 @@ end
 function sliding()
     # Model parameters
     siay = 365.25 * 24 * 60 * 60
-    tspan = (0.0, siay * 10000.0)
+    tspan = (0.0, siay * 301.0) # This will run
+    # tspan = (0.0, siay * 302.0) # This will run but fail for the a, b case    
     μ = 3e10
     ν = 0.25
     ρ = 2700.0
@@ -112,6 +130,9 @@ function sliding()
     fstar = 0.6 # ???
     vstar = vp # ???
     θstar = 1e9 # ???
+
+    # Show Tushar scalings for a and b
+    tusharabmodels()
     
     # Time integrate - classic
     icsclassic = [1e8; vp / 1000]

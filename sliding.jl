@@ -20,12 +20,12 @@ function tusharabmodels()
     legend()
 end
 
-function aginglaw(v, θ, dc)
-    return 1 - θ * v / dc
+function aginglaw(v, theta, dc)
+    return 1 - theta * v / dc
 end
 
-function sliplaw(v, θ, dc)
-    return -v * θ / dc * log(v * θ / dc)
+function sliplaw(v, theta, dc)
+    return -v * theta / dc * log(v * θ / dc)
 end
 
 function calcdadv(v)

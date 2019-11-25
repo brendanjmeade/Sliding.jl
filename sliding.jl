@@ -30,7 +30,7 @@ end
 
 function calcdadv(v)
     amin = 0.045
-    ahighdiff =  0.0319 - amin
+    ahighdiff =  0.0319 - amin # is this right
     δ = 1e-2 # m/s
     # a = amin + ahighdiff * 0.5 * (1 + tanh((v - 5e-3) / δ))
     dadv = ahighdiff * 0.5 * (sech((v - 5e-3) / δ))^2 / δ
